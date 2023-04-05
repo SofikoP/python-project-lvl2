@@ -1,28 +1,29 @@
 import json
 
 
-def remove_indent(string):
-    return string[4:]
-
-
 def generate_diff(path_to_file1, path_to_file2):
     file1 = json.load(open(path_to_file1))
     file2 = json.load(open(path_to_file2))
-    common_value = file1.keys() & file2.keys()
-    old_value = file1.keys() - file2.keys()
-    new_value = file2.keys() - file1.keys()
+    common_value = set(file1.keys()) & set(file2.keys())
+    old_value = set(file1.keys()) - set(file2.keys())
+    new_value = set(file2.keys()) - set(file1.keys())
     begin = '{' + '\n'
     end = '\n' + '}'
-    result = []
+    result = {}
     for i in common_value:
         if file1[i] == file2[i]:
-            result.append(f'    {i}: {file1[i]}')
+            result['  ' + i] = file1[i]
         else:
-            result.append(f'  - {i}: {file1[i]}')
-            result.append(f'  + {i}: {file2[i]}')
+            result['- ' + i] = file1[i]
+            result['+ ' + i] = file2[i]
     for i in old_value:
-        result.append(f'  - {i}: {file1[i]}')
+        result['- ' + i] = file1[i]
     for i in new_value:
-        result.append(f'  + {i}: {file2[i]}')
-    result.sort(key=remove_indent)
-    return begin + '\n'.join(result) + end
+        result['+ ' + i] = file2[i]
+    diff = []
+    for k, v in sorted(result.items(), key=lambda x: x[0][2:]):
+        if type(v) == bool:
+            diff.append(f'  {k}: {str(v).lower()}')
+        else:
+            diff.append(f'  {k}: {v}')
+    return begin + '\n'.join(diff) + end
